@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Black Square Game</title>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+    canvas {
+        background-color: #eee;
+        display: block;
+        margin: 0 auto;
+    }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<div id="menu" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+    <h2>Choose Your Attack Style:</h2>
+    <button onclick="startGame('ranged')">Ranged</button>
+    <button onclick="startGame('swordplay')">Swordplay</button>
+</div>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const playerSize = 20;
+    const enemySize = 20;
+    let playerX = canvas.width / 2;
+    let playerY = canvas.height / 2;
+    let bullets = [];
+    let enemies = [];
+    let level = 1;
+    let score = 0;
+    let attackStyle = "";
+
+    function startGame(style) {
+        attackStyle = style;
+        document.getElementById("menu").style.display = "none";
+        init();
+        gameLoop();
+    }
+
+    function init() {
+        playerX = canvas.width / 2;
+        playerY = canvas.height / 2;
+        bullets = [];
+        enemies = [];
+        for (let i = 0; i < level * 5; i++) {
+            spawnEnemy();
+        }
+    }
+
+    function spawnEnemy() {
+        const enemyX = Math.random() * (canvas.width - enemySize);
+        const enemyY = Math.random() * (canvas.height - enemySize);
+        enemies.push({ x: enemyX, y: enemyY });
+    }
+
+    function drawPlayer() {
+        ctx.fillStyle = "black";
+        ctx.fillRect(playerX, playerY, playerSize, playerSize);
+    }
+
+    function drawEnemies() {
+        ctx.fillStyle = "red";
+        enemies.forEach(enemy => {
+            ctx.fillRect(enemy.x, enemy.y, enemySize, enemySize);
+        });
+    }
+
+    function drawBullets() {
+        ctx.fillStyle = "blue";
+        bullets.forEach(bullet => {
+            ctx.fillRect(bullet.x, bullet.y, 5, 5);
+        });
+    }
+
+    function moveBullets() {
+        bullets.forEach(bullet => {
+            bullet.x += 5;
+        });
+    }
+
+    function moveEnemies() {
+        enemies.forEach(enemy => {
+            if (playerX < enemy.x) enemy.x--;
+            if (playerX > enemy.x) enemy.x++;
+            if (playerY < enemy.y) enemy.y--;
+            if (playerY > enemy.y) enemy.y++;
+        });
+    }
+
+    function checkCollisions() {
+        enemies.forEach((enemy, enemyIndex) => {
+            bullets.forEach((bullet, bulletIndex) => {
+                if (bullet.x < enemy.x + enemySize &&
+                    bullet.x + 5 > enemy.x &&
+                    bullet.y < enemy.y + enemySize &&
+                    bullet.y + 5 > enemy.y) {
+                    bullets.splice(bulletIndex, 1);
+                    enemies.splice(enemyIndex, 1);
+                    score++;
+                }
+            });
+
+            if (playerX < enemy.x + enemySize &&
+                playerX + playerSize > enemy.x &&
+                playerY < enemy.y + enemySize &&
+                playerY + playerSize > enemy.y) {
+                // Player hit by enemy
+                // For simplicity, let's reset the game here
+                alert("Game Over! Your Score: " + score);
+                level = 1;
+                score = 0;
+                init();
+            }
+        });
+    }
+
+    function gameLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawPlayer();
+        drawEnemies();
+        drawBullets();
+        moveBullets();
+        moveEnemies();
+        checkCollisions();
+        requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener("keydown", function(event) {
+        switch(event.key) {
+            case "ArrowUp":
+                playerY -= 5;
+                break;
+            case "ArrowDown":
+                playerY += 5;
+                break;
+            case "ArrowLeft":
+                playerX -= 5;
+                break;
+            case "ArrowRight":
+                playerX += 5;
+                break;
+            case " ":
+                if (attackStyle === "ranged") {
+                    bullets.push({ x: playerX + playerSize, y: playerY + (playerSize / 2) });
+                } else if (attackStyle === "swordplay") {
+                    // Sword attack logic goes here (for example, check if enemy is nearby and remove it)
+                }
+                break;
+        }
+    });
+</script>
+</body>
+</html>
